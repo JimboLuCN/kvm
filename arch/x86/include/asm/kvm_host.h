@@ -16,6 +16,7 @@
 #include <linux/mmu_notifier.h>
 #include <linux/tracepoint.h>
 #include <linux/cpumask.h>
+#include <linux/irq_work.h>
 
 #include <linux/kvm.h>
 #include <linux/kvm_para.h>
@@ -294,6 +295,24 @@ struct kvm_mmu {
 	u64 pdptrs[4]; /* pae */
 };
 
+#define KVM_PMU_MAX_GENERAL_PURPOSE_COUNTERS 4
+
+struct kvm_pmc {
+	u64 counter;
+	u64 eventsel;
+	struct perf_event *perf_event;
+	struct kvm_vcpu *vcpu;
+};
+
+struct kvm_pmu {
+	unsigned nr_arch_gp_counters;
+	unsigned available_event_types;
+	u64 counter_bitmask;
+	u8 version;
+	struct kvm_pmc gp_counters[KVM_PMU_MAX_GENERAL_PURPOSE_COUNTERS];
+	struct irq_work irq_work;
+};
+
 struct kvm_vcpu_arch {
 	/*
 	 * rip and regs accesses must go through
@@ -434,6 +453,8 @@ struct kvm_vcpu_arch {
 	u64 mmio_gva;
 	unsigned access;
 	gfn_t mmio_gfn;
+
+	struct kvm_pmu pmu;
 
 	/* used for guest single stepping over the given code position */
 	unsigned long singlestep_rip;
@@ -889,5 +910,13 @@ bool kvm_arch_can_inject_async_page_present(struct kvm_vcpu *vcpu);
 extern bool kvm_find_async_pf_gfn(struct kvm_vcpu *vcpu, gfn_t gfn);
 
 void kvm_complete_insn_gp(struct kvm_vcpu *vcpu, int err);
+
+void kvm_pmu_init(struct kvm_vcpu *vcpu);
+void kvm_pmu_destroy(struct kvm_vcpu *vcpu);
+void kvm_pmu_cpuid_update(struct kvm_vcpu *vcpu);
+bool kvm_pmu_msr(struct kvm_vcpu *vcpu, u32 msr);
+int kvm_pmu_get_msr(struct kvm_vcpu *vcpu, u32 msr, u64 *data);
+int kvm_pmu_set_msr(struct kvm_vcpu *vcpu, u32 msr, u64 data);
+int kvm_pmu_read_pmc(struct kvm_vcpu *vcpu, unsigned pmc, u64 *data);
 
 #endif /* _ASM_X86_KVM_HOST_H */
