@@ -2523,6 +2523,25 @@ static void do_cpuid_ent(struct kvm_cpuid_entry2 *entry, u32 function,
 	}
 	case 9:
 		break;
+	case 0xA: { /* Architectural Performance Monitoring */
+		unsigned version = entry->eax & 0xff;
+		unsigned gp_nr = (entry->eax >> 8) & 0xff;
+		unsigned gp_width = (entry->eax >> 16) & 0xff;
+
+		if (version < 1) {
+			gp_nr = 2;
+			gp_width = 40;
+		}
+
+		entry->eax = 0x01             /* version */
+			| (gp_nr << 8)
+			| (gp_width << 16)
+			| (7 << 24);   /* supported counters bitmask length */
+		entry->ebx &= (1 << 7) - 1;
+		entry->ecx = 0;
+		entry->edx = 0;
+		break;
+	}
 	/* function 0xb has additional index. */
 	case 0xb: {
 		int i, level_type;
@@ -2617,7 +2636,6 @@ static void do_cpuid_ent(struct kvm_cpuid_entry2 *entry, u32 function,
 	case 3: /* Processor serial number */
 	case 5: /* MONITOR/MWAIT */
 	case 6: /* Thermal management */
-	case 0xA: /* Architectural Performance Monitoring */
 	case 0x80000007: /* Advanced power management */
 	case 0xC0000002:
 	case 0xC0000003:
