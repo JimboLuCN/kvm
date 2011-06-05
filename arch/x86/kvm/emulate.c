@@ -3225,7 +3225,7 @@ static struct opcode twobyte_table[256] = {
 	DI(ImplicitOps | Priv, wrmsr),
 	IIP(ImplicitOps, em_rdtsc, rdtsc, check_rdtsc),
 	DI(ImplicitOps | Priv, rdmsr),
-	DIP(ImplicitOps | Priv, rdpmc, check_rdpmc),
+	DIP(ImplicitOps, rdpmc, check_rdpmc),
 	I(ImplicitOps | VendorSpecific, em_sysenter),
 	I(ImplicitOps | Priv | VendorSpecific, em_sysexit),
 	N, N,
