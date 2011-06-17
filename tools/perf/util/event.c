@@ -44,6 +44,14 @@ static struct perf_sample synth_sample = {
 	.period	   = 1,
 };
 
+void event_attr_init(struct perf_event_attr *attr)
+{
+	if (!perf_host)
+		attr->exclude_host  = 1;
+	if (!perf_guest)
+		attr->exclude_guest = 1;
+}
+
 static pid_t perf_event__synthesize_comm(union perf_event *event, pid_t pid,
 					 int full, perf_event__handler_t process,
 					 struct perf_session *session)
